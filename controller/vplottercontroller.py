@@ -15,9 +15,41 @@ import re
 import time
 import datetime
 import numpy as np
-from pyqtgraph import QtGui, QtCore
+# from pyqtgraph import QtGui, QtCore
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtGui import QPainter, QColor, QPen, QTextCursor
+from PyQt5.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QDateEdit,
+    QTextEdit,
+    QDateTimeEdit,
+    QDial,
+    QDoubleSpinBox,
+    QFontComboBox,
+    QLabel,
+    QLCDNumber,
+    QLineEdit,
+    QMainWindow,
+    QProgressBar,
+    QPushButton,
+    QRadioButton,
+    QGroupBox,
+    QTabWidget,
+    QSlider,
+    QSpinBox,
+    QTimeEdit,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGridLayout,
+    QWidget,
+)
+
+
+
 import pyqtgraph as pg
-from pyqtgraph.ptime import time as pyqtgtime
+# from pyqtgraph.ptime import time as pyqtgtime
 from qtguielements import StartStopButtons, PlottingTimer, Spinner
 from generaltools import gettimestamp, sec2HMS
 import serial
@@ -27,7 +59,7 @@ pg.setConfigOption('background', 'w')
 pg.setConfigOption('foreground', 'k')
 
 
-class vplottercontroller(QtGui.QWidget):
+class vplottercontroller(QWidget):
     """GUI for GRBL in PyQt."""
 
     def __init__(self):
@@ -38,7 +70,7 @@ class vplottercontroller(QtGui.QWidget):
     def initUI(self):
         """Initialise the GUI."""
         self.usemock = False
-        hbmain = QtGui.QHBoxLayout()
+        hbmain = QHBoxLayout()
         
         self.plt1 = pg.PlotWidget()
         self.plt1.setLabel('left', "y (mm)")
@@ -54,21 +86,21 @@ class vplottercontroller(QtGui.QWidget):
         hbmain.addWidget(self.plt1)
         
         
-        vbconsole = QtGui.QVBoxLayout()
-        gb = QtGui.QGroupBox('console:')
-        gbvb = QtGui.QVBoxLayout()
+        vbconsole = QVBoxLayout()
+        gb = QGroupBox('console:')
+        gbvb = QVBoxLayout()
         
-        gbvbhb = QtGui.QHBoxLayout()
-        self.gui_console_date_cb = QtGui.QCheckBox('show date', self, checkable=True, checked=False)
-        self.gui_console_time_cb = QtGui.QCheckBox('show time', self, checkable=True, checked=False)
+        gbvbhb = QHBoxLayout()
+        self.gui_console_date_cb = QCheckBox('show date', self, checkable=True, checked=False)
+        self.gui_console_time_cb = QCheckBox('show time', self, checkable=True, checked=False)
         gbvbhb.addWidget(self.gui_console_date_cb)
         gbvbhb.addWidget(self.gui_console_time_cb)
         gbvb.addLayout(gbvbhb)
 
-        self.gui_consoletext = QtGui.QTextEdit()
+        self.gui_consoletext = QTextEdit()
         gbvb.addWidget(self.gui_consoletext)
         
-        self.gui_command = QtGui.QLineEdit('', self)
+        self.gui_command = QLineEdit('', self)
         self.gui_command.returnPressed.connect(self.respond_gui_command)
         gbvb.addWidget(self.gui_command)
         
@@ -78,20 +110,20 @@ class vplottercontroller(QtGui.QWidget):
         hbmain.addLayout(vbconsole)
 
 
-        vbcontrols = QtGui.QVBoxLayout()
+        vbcontrols = QVBoxLayout()
         
-        gb = QtGui.QGroupBox('connection:')
-        gbvb = QtGui.QVBoxLayout()
-        hbox = QtGui.QHBoxLayout()
-        pb = QtGui.QPushButton("Scan")
+        gb = QGroupBox('connection:')
+        gbvb = QVBoxLayout()
+        hbox = QHBoxLayout()
+        pb = QPushButton("Scan")
         pb.clicked.connect(self.scan)
         self.scanbtn = pb
         hbox.addWidget(pb)
-        cb=QtGui.QComboBox()
+        cb=QComboBox()
         self.port_list=cb
         self.port_list.setMinimumWidth(200)
         hbox.addWidget(cb)
-        cb=QtGui.QCheckBox("Open")
+        cb=QCheckBox("Open")
         self.opened=cb
         cb.stateChanged.connect(self.toggle_connection)
         hbox.addWidget(cb)
@@ -99,48 +131,48 @@ class vplottercontroller(QtGui.QWidget):
         gb.setLayout(gbvb)
         vbcontrols.addWidget(gb)
 
-        # gb = QtGui.QGroupBox('controls:')
-        # gbvb = QtGui.QVBoxLayout()
-        # gbvbhb = QtGui.QHBoxLayout()
-        # btn = QtGui.QPushButton('unlock')
+        # gb = QGroupBox('controls:')
+        # gbvb = QVBoxLayout()
+        # gbvbhb = QHBoxLayout()
+        # btn = QPushButton('unlock')
         # btn.clicked.connect(self.unlock)
         # gbvbhb.addWidget(btn)
-        # btn = QtGui.QPushButton('FEED HOLD')
+        # btn = QPushButton('FEED HOLD')
         # btn.clicked.connect(self.feed_hold)
         # gbvbhb.addWidget(btn)
-        # btn = QtGui.QPushButton('RESUME')
+        # btn = QPushButton('RESUME')
         # btn.clicked.connect(self.feed_resume)
         # gbvbhb.addWidget(btn)
         # gbvb.addLayout(gbvbhb)
         # gb.setLayout(gbvb)
         # vbcontrols.addWidget(gb)
 
-        gb = QtGui.QGroupBox('main:')
-        gbvb = QtGui.QVBoxLayout()
+        gb = QGroupBox('main:')
+        gbvb = QVBoxLayout()
         
         
-        gbvbhb = QtGui.QHBoxLayout()
-        btn = QtGui.QPushButton('unlock')
+        gbvbhb = QHBoxLayout()
+        btn = QPushButton('unlock')
         btn.clicked.connect(self.unlock)
         gbvbhb.addWidget(btn)
         
-        self.motorlock_enable_cb = QtGui.QCheckBox('motorlock', self, checkable=True, checked=True)
+        self.motorlock_enable_cb = QCheckBox('motorlock', self, checkable=True, checked=True)
         self.motorlock_enable_cb.clicked.connect(self.motorlock_toggle)
         gbvbhb.addWidget(self.motorlock_enable_cb)
         
-        btn = QtGui.QPushButton('set MCS zero (home)!')
+        btn = QPushButton('set MCS zero (home)!')
         btn.clicked.connect(self.gui_set_mcs_zero)
         gbvbhb.addWidget(btn)
-        btn = QtGui.QPushButton('set WCS zero!')
+        btn = QPushButton('set WCS zero!')
         btn.clicked.connect(self.gui_set_wcs_zero)
         gbvbhb.addWidget(btn)
         gbvb.addLayout(gbvbhb)
         
-        gbvbhb = QtGui.QHBoxLayout()
-        btn = QtGui.QPushButton('G0 go to MCS origin')
+        gbvbhb = QHBoxLayout()
+        btn = QPushButton('G0 go to MCS origin')
         btn.clicked.connect(self.go_to_mcs_origin)
         gbvbhb.addWidget(btn)
-        btn = QtGui.QPushButton('G0 go to WCS origin')
+        btn = QPushButton('G0 go to WCS origin')
         btn.clicked.connect(self.go_to_wcs_origin)
         gbvbhb.addWidget(btn)
         gbvb.addLayout(gbvbhb)
@@ -148,13 +180,13 @@ class vplottercontroller(QtGui.QWidget):
         gb.setLayout(gbvb)
         vbcontrols.addWidget(gb)
 
-        gb = QtGui.QGroupBox('position:')
-        gbvb = QtGui.QVBoxLayout()
-        gbvbhb = QtGui.QHBoxLayout()
-        btn = QtGui.QPushButton('get state')
+        gb = QGroupBox('position:')
+        gbvb = QVBoxLayout()
+        gbvbhb = QHBoxLayout()
+        btn = QPushButton('get state')
         btn.clicked.connect(self.gui_get_state)
         gbvbhb.addWidget(btn)
-        self.gui_get_state_online_cb = QtGui.QCheckBox('online', self, checkable=True, checked=False)
+        self.gui_get_state_online_cb = QCheckBox('online', self, checkable=True, checked=False)
         self.gui_get_state_online_cb.clicked.connect(self.gui_get_state_online_cb_clicked)
         gbvbhb.addWidget(self.gui_get_state_online_cb)
         
@@ -162,23 +194,23 @@ class vplottercontroller(QtGui.QWidget):
         
         gbvb.addLayout(gbvbhb)
         
-        gbvbhb = QtGui.QHBoxLayout()
-        self.gui_info_state1 = QtGui.QLabel('state', self)
-        self.gui_info_state2 = QtGui.QLabel('state', self)
-        self.gui_info_mcs_x = QtGui.QLabel('MCS x', self)
-        self.gui_info_mcs_y = QtGui.QLabel('MCS y', self)
-        self.gui_info_wcs_x = QtGui.QLabel('WCS x', self)
-        self.gui_info_wcs_y = QtGui.QLabel('WCS y', self)        
+        gbvbhb = QHBoxLayout()
+        self.gui_info_state1 = QLabel('state', self)
+        self.gui_info_state2 = QLabel('state', self)
+        self.gui_info_mcs_x = QLabel('MCS x', self)
+        self.gui_info_mcs_y = QLabel('MCS y', self)
+        self.gui_info_wcs_x = QLabel('WCS x', self)
+        self.gui_info_wcs_y = QLabel('WCS y', self)        
         
         gbvb.addWidget(self.gui_info_state1)
         gbvb.addWidget(self.gui_info_state2)
         
-        gbvbhb = QtGui.QHBoxLayout()
+        gbvbhb = QHBoxLayout()
         gbvbhb.addWidget(self.gui_info_mcs_x)
         gbvbhb.addWidget(self.gui_info_mcs_y)
         # gbvb.addLayout(gbvbhb)
         
-        #gbvbhb = QtGui.QHBoxLayout()
+        #gbvbhb = QHBoxLayout()
         gbvbhb.addWidget(self.gui_info_wcs_x)
         gbvbhb.addWidget(self.gui_info_wcs_y)
         gbvb.addLayout(gbvbhb)
@@ -192,19 +224,19 @@ class vplottercontroller(QtGui.QWidget):
 
         
 
-        gb = QtGui.QGroupBox('jogging controls:')
-        gbvb = QtGui.QVBoxLayout()
+        gb = QGroupBox('jogging controls:')
+        gbvb = QVBoxLayout()
         
-        gbvbhb = QtGui.QHBoxLayout()
-        #btn = QtGui.QPushButton('1')
+        gbvbhb = QHBoxLayout()
+        #btn = QPushButton('1')
         #btn.clicked.connect(self.unlock)
         #gbvbhb.addWidget(btn)
         self.gui_jog_stepsize = Spinner('jog step size (mm):', 1, step=1, guic=gbvbhb)
         self.gui_jog_feedrate = Spinner('feed rate (mm/min):', 5000, step=100, guic=gbvbhb)
         gbvb.addLayout(gbvbhb)
 
-        horizontalGroupBox = QtGui.QGroupBox("")
-        layout = QtGui.QGridLayout()
+        horizontalGroupBox = QGroupBox("")
+        layout = QGridLayout()
         layout.setColumnStretch(0, 1)
         layout.setColumnStretch(1, 1)
         layout.setColumnStretch(2, 1)
@@ -218,7 +250,7 @@ class vplottercontroller(QtGui.QWidget):
         #d = {'what': '-x +y', 'n': 0, 'm': 0}
         
         def makebutton(d):
-            btn = QtGui.QPushButton(d['what'])
+            btn = QPushButton(d['what'])
             btn.clicked.connect(set_jogfun(d['what']))
             layout.addWidget(btn,d['n'],d['m'])
             
@@ -241,22 +273,22 @@ class vplottercontroller(QtGui.QWidget):
         vbcontrols.addWidget(gb)
         
         
-        gb = QtGui.QGroupBox('absolute positioning:')
-        gbvb = QtGui.QVBoxLayout()
+        gb = QGroupBox('absolute positioning:')
+        gbvb = QVBoxLayout()
         
         
         
-        gbvbhb = QtGui.QHBoxLayout()
+        gbvbhb = QHBoxLayout()
         self.gui_g1_xpos_mm = Spinner('x (mm):', 0, step=1, guic=gbvbhb)
         self.gui_g1_ypos_mm = Spinner('y (mm):', 0, step=1, guic=gbvbhb)
         gbvb.addLayout(gbvbhb)
         self.gui_g1_feedrate = Spinner('feed rate (mm/min):', 5000, step=100, guic=gbvb)
         
-        gbvbhb = QtGui.QHBoxLayout()
-        btn = QtGui.QPushButton('G0 GO')
+        gbvbhb = QHBoxLayout()
+        btn = QPushButton('G0 GO')
         btn.clicked.connect(self.g0_go_to_position)
         gbvbhb.addWidget(btn)
-        btn = QtGui.QPushButton('G1 GO')
+        btn = QPushButton('G1 GO')
         btn.clicked.connect(self.g1_go_to_position)
         gbvbhb.addWidget(btn)
         gbvb.addLayout(gbvbhb)
@@ -265,20 +297,20 @@ class vplottercontroller(QtGui.QWidget):
         vbcontrols.addWidget(gb)
         
         
-        gb = QtGui.QGroupBox('spindle control:')
-        gbvb = QtGui.QVBoxLayout()
+        gb = QGroupBox('spindle control:')
+        gbvb = QVBoxLayout()
         
-        gbvbhb = QtGui.QHBoxLayout()
+        gbvbhb = QHBoxLayout()
         self.gui_spindlespeed = Spinner('spindle / servo:', 600, step=50, bounds=[0, 1000], guic=gbvbhb, fun=self.set_spindle_speed)
         
-        self.gui_spindle_enable_cb = QtGui.QCheckBox('Spindle', self, checkable=True, checked=False)
+        self.gui_spindle_enable_cb = QCheckBox('Spindle', self, checkable=True, checked=False)
         self.gui_spindle_enable_cb.clicked.connect(self.gui_spindle_enable_cb_clicked)
         gbvbhb.addWidget(self.gui_spindle_enable_cb)
         
-        #btn = QtGui.QPushButton('ON')
+        #btn = QPushButton('ON')
         #btn.clicked.connect(self.set_spindle_on)
         #gbvbhb.addWidget(btn)
-        #btn = QtGui.QPushButton('OFF')
+        #btn = QPushButton('OFF')
         #btn.clicked.connect(self.set_spindle_off)
         #gbvbhb.addWidget(btn)
         
@@ -288,52 +320,52 @@ class vplottercontroller(QtGui.QWidget):
         
         
         
-        gb = QtGui.QGroupBox('G-code streaming:')
-        gbvb = QtGui.QVBoxLayout()
+        gb = QGroupBox('G-code streaming:')
+        gbvb = QVBoxLayout()
         
-        gbvbhb = QtGui.QHBoxLayout()
-        l = QtGui.QLabel('file:')
+        gbvbhb = QHBoxLayout()
+        l = QLabel('file:')
         gbvbhb.addWidget(l)
-        self.gcodefile_text = QtGui.QTextEdit(os.path.join(os.path.expanduser('~'), 'test.gcode'))
+        self.gcodefile_text = QTextEdit(os.path.join(os.path.expanduser('~'), 'test.gcode'))
         self.gcodefile_text.setMinimumWidth(150)
         self.gcodefile_text.setMaximumHeight(30)
         gbvbhb.addWidget(self.gcodefile_text)
-        btn = QtGui.QPushButton('...')
+        btn = QPushButton('...')
         btn.clicked.connect(self._browse_gcodefile)
         gbvbhb.addWidget(btn)
-        btn = QtGui.QPushButton('load')
+        btn = QPushButton('load')
         btn.clicked.connect(self.gcode_load_file)
         gbvbhb.addWidget(btn)
         gbvb.addLayout(gbvbhb)
         
-        gbvbhb = QtGui.QHBoxLayout()
-        self.gcode_stream_progressbar = QtGui.QProgressBar(self)
+        gbvbhb = QHBoxLayout()
+        self.gcode_stream_progressbar = QProgressBar(self)
         gbvbhb.addWidget(self.gcode_stream_progressbar)
         
         
-        btn = QtGui.QPushButton('start streaming')
+        btn = QPushButton('start streaming')
         btn.clicked.connect(self.gcode_stream_start)
         gbvbhb.addWidget(btn)
-        btn = QtGui.QPushButton('stop streaming')
+        btn = QPushButton('stop streaming')
         btn.clicked.connect(self.gcode_stream_stop)
         gbvbhb.addWidget(btn)
         gbvb.addLayout(gbvbhb)
         
-        self.gui_eta_info = QtGui.QLabel('--- streaming ETA info ---', self)
+        self.gui_eta_info = QLabel('--- streaming ETA info ---', self)
         gbvb.addWidget(self.gui_eta_info)
         
         gbvb.addLayout(gbvbhb)
         gb.setLayout(gbvb)
         vbcontrols.addWidget(gb)
         
-        gb = QtGui.QGroupBox('')
-        gbhb = QtGui.QHBoxLayout()
+        gb = QGroupBox('')
+        gbhb = QHBoxLayout()
         
-        btn = QtGui.QPushButton('FEED HOLD')
+        btn = QPushButton('FEED HOLD')
         btn.clicked.connect(self.feed_hold)
         btn.setMinimumHeight(60)
         gbhb.addWidget(btn)
-        btn = QtGui.QPushButton('RESUME')
+        btn = QPushButton('RESUME')
         btn.clicked.connect(self.feed_resume)
         btn.setMinimumHeight(60)
         gbhb.addWidget(btn)
@@ -355,7 +387,7 @@ class vplottercontroller(QtGui.QWidget):
         self.show()
         self.scan()
         
-        self.get_state_timer = QtCore.QTimer()
+        self.get_state_timer = QTimer()
         self.get_state_timer.timeout.connect(self.gui_get_state)
         self.serial_active = False
         self.gcode_stream_running = False
@@ -373,7 +405,7 @@ class vplottercontroller(QtGui.QWidget):
             self.gui_consoletext.append("%s: %s" % (timestamptxt, txt))
         else:
             self.gui_consoletext.append("%s" % txt)
-        self.gui_consoletext.moveCursor(QtGui.QTextCursor.End)
+        self.gui_consoletext.moveCursor(QTextCursor.End)
         # print("%s: %s" % (timestamptxt, txt))
 
 
@@ -381,7 +413,7 @@ class vplottercontroller(QtGui.QWidget):
         """Scan for serial ports with controllers attached."""
         self.port_list.clear()
         self.port_list.addItem('scanning for COMports, pls wait...')
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
         
         self.port_list.clear()
         for port, desc, hwid in sorted(comports()):
@@ -401,7 +433,7 @@ class vplottercontroller(QtGui.QWidget):
 
     def connect(self):
         # self.info_status.setText('opening port and initialising device. Please wait...')
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
         self.opened.setChecked(True)
         portName = self.port_list.currentText()
         self.ser = serial.Serial(port=portName, baudrate=115200, timeout=0.5)
@@ -699,7 +731,7 @@ class vplottercontroller(QtGui.QWidget):
         verbose = False
         RX_BUFFER_SIZE = 128
 
-        now = pyqtgtime()
+        now = time.time()  # pyqtgtime()
         self.ETAtimer_last = now
         self.ETAtimer_start = now
         # self.streamglobalcounter = 0
@@ -731,7 +763,7 @@ class vplottercontroller(QtGui.QWidget):
                     g_count += 1 # Iterate g-code counter
                     grbl_out += str(g_count);  # Add line finished indicator
                     del c_line[0]  # Delete the block character count corresponding to the last 'ok'
-                QtGui.QApplication.processEvents()
+                QApplication.processEvents()
 
             if verbose: print("SND: " + str(l_count) + " : " + l_block,)
             # cmd = l_block + '\n'
@@ -748,13 +780,13 @@ class vplottercontroller(QtGui.QWidget):
             if n % 10 == 0 or n+1 == Nlines:
                 self.gcode_stream_progressbar.setValue((n+1)/Nlines*100)
                 
-                now = pyqtgtime()
+                now = time.time()  # pyqtgtime()
                 Dt0 = now - self.ETAtimer_start
                 eta = Dt0/(n+1) * (Nlines-n)
                 self.gui_eta_info.setText('line %i/%i, eta: %.0fh, %.0fm, %.0fs, runtime: %.0fh, %.0fm, %.0fs' %
                                                (n+1, Nlines, sec2HMS(eta)[0], sec2HMS(eta)[1], sec2HMS(eta)[2], sec2HMS(Dt0)[0], sec2HMS(Dt0)[1], sec2HMS(Dt0)[2] ) )
                 
-                QtGui.QApplication.processEvents()
+                QApplication.processEvents()
 
         self.userinfo('G-Code steaming finished!')
         self._gcode_stream_stop_do()
@@ -771,7 +803,7 @@ class vplottercontroller(QtGui.QWidget):
 
 
     def _browse_gcodefile(self):
-        file = QtGui.QFileDialog.getOpenFileName(directory=self.gcodefile_text.toPlainText())
+        file = QFileDialog.getOpenFileName(directory=self.gcodefile_text.toPlainText())
         print(file)
         print(file[0])
         self.gcodefile_text.setText(file[0])
@@ -800,7 +832,7 @@ class vplottercontroller(QtGui.QWidget):
 
 def main():
     """The main."""
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     ex = vplottercontroller()
     sys.exit(app.exec_())
 
